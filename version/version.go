@@ -7,9 +7,16 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
+)
+
+var pseudo = regexp.MustCompile(`^v[0-9]+\.(0\.0-|\d+\.\d+-([^+]*\.)?0\.)\d{14}-[A-Za-z0-9]+(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$`)
+
+const (
+	Devel = "devel"
 )
 
 type OutputFormat string
@@ -61,7 +68,7 @@ func Load() (Info, error) {
 	info := Info{
 		Build: Build{
 			GoVersion: bi.GoVersion,
-			Version:   "devel",
+			Version:   Devel,
 		},
 		Runtime: Runtime{
 			Distro: getDistro(),
@@ -80,9 +87,16 @@ func Load() (Info, error) {
 			if err != nil {
 				return Info{}, err
 			}
-			if !modified && bi.Main.Version != "" {
-				info.Build.Version = bi.Main.Version
+			if bi.Main.Version == "" {
+				continue
 			}
+			if modified {
+				continue
+			}
+			if pseudo.MatchString(bi.Main.Version) {
+				continue
+			}
+			info.Build.Version = bi.Main.Version
 		}
 	}
 	return info, nil
