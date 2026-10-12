@@ -10,7 +10,13 @@ import (
 func TestInfoOutput(t *testing.T) {
 	t.Parallel()
 
-	info := Info{
+	info, err := Load()
+	require.NoError(t, err)
+	require.Equal(t, Devel, info.Build.Version)
+	require.NotEmpty(t, info.Build.GoVersion)
+	require.NotEmpty(t, info.Runtime.Distro)
+
+	info = Info{
 		Build: Build{
 			Version: "foo",
 			Commit:  "commit",
@@ -18,7 +24,7 @@ func TestInfoOutput(t *testing.T) {
 		Runtime: Runtime{},
 	}
 	buf := &bytes.Buffer{}
-	err := info.Output(buf, OutputFormatText)
+	err = info.Output(buf, OutputFormatText)
 	require.NoError(t, err)
 	require.EqualT(t, "version.test version foo commit\n", buf.String())
 
